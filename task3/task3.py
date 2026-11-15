@@ -43,16 +43,26 @@ def calculate_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
     return float(np.degrees(angle))
 
 
-def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4"):
+def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4", output_name: str = "output_squat.mp4"):
     cfg = EXERCISE_CONFIG[exercise]
     idx_a, idx_b, idx_c = cfg["joints"]
 
     model = YOLO("yolov8n-pose.pt")
 
-    video_path = Path(__file__).parent / input_name
+    base_dir = Path(__file__).parent
+    video_path = base_dir / input_name
+    output_path = base_dir / output_name
+
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise FileNotFoundError(f"Video file not found: '{video_path}'!")
+
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
 
     rep_count = 0
     stage = "UP"
@@ -94,14 +104,18 @@ def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4
         cv2.putText(annotated, f"EXERCISE: {exercise.upper()}", (25, 42), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (200, 200, 200), 2)
         cv2.putText(annotated, f"REPS: {rep_count}  |  STAGE: {stage}", (25, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
 
+        out.write(annotated)
         cv2.imshow("Exercise Repetition Counter", annotated)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
+    print(f"Finished! Total {exercise} repetitions counted: {rep_count}")
+    print(f"Annotated video saved to: {output_path}")
 
 
 if __name__ == "__main__":
-    run_rep_counter(exercise="squat", input_name="squat_sample.mp4")
+    run_rep_counter(exercise="squat", input_name="squat_sample.mp4", output_name="output_squat.mp4")
