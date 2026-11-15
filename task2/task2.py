@@ -62,7 +62,31 @@ def evaluate_quality(img_bgr):
     }
 
 
-url = "https://upload.wikimedia.org/wikipedia/commons/5/50/Shieldgreen%2C_a_house_in_the_forest_-_geograph.org.uk_-_6848009.jpg"
+def fix_quality(img_bgr, report):
+    # convert to LAB to enhance luminance without distorting colors
+    lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+    l_channel, a_channel, b_channel = cv2.split(lab)
+
+    # gamma correction for underexposed or overexposed images
+    if "underexposed (too dark)" in report["issues"]:
+        gamma = 0.65
+        lut = np.array([((i / 255.0) ** gamma) * 255 for i in range(256)], dtype=np.uint8)
+        l_channel = cv2.LUT(l_channel, lut)
+    elif "overexposed (too bright)" in report["issues"]:
+        gamma = 1.5
+        lut = np.array([((i / 255.0) ** gamma) * 255 for i in range(256)], dtype=np.uint8)
+        l_channel = cv2.LUT(l_channel, lut)
+
+    # local contrast enhancement using CLAHE
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    l_enhanced = clahe.apply(l_channel)
+
+    merged_lab = cv2.merge((l_enhanced, a_channel, b_channel))
+    return cv2.cvtColor(merged_lab, cv2.COLOR_LAB2BGR)
+
+
+# 1. load remote image from URL
+url = "https://upload.wikimedia.org/wikipedia/commons/d/df/Underexposed_%E2%80%93_Pulau_Ubin_%284440132168%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"
 req = urllib.request.Request(
     url,
     headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"}
@@ -74,6 +98,7 @@ img_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 if img_bgr is None:
     raise ValueError("Failed to decode image from URL!")
 
+# 2 & 3. evaluate image quality based on histogram statistics
 report = evaluate_quality(img_bgr)
 print("=== IMAGE QUALITY REPORT ===")
 print(f"Mean brightness: {report['mean_brightness']} / 255")
@@ -83,7 +108,14 @@ print(f"Dark pixels (<50): {report['dark_pct']}% | Bright pixels (>205): {report
 
 if report["is_good"]:
     print("Verdict: Good exposure and contrast.")
+    plot_histograms(img_bgr, title_prefix="[Original - OK] ")
 else:
     print("Verdict: Defective image ->", ", ".join(report["issues"]))
+    plot_histograms(img_bgr, title_prefix="[Before Fix] ")
 
-plot_histograms(img_bgr)
+    # bonus: automatic image quality enhancement
+    img_fixed = fix_quality(img_bgr, report)
+    fixed_report = evaluate_quality(img_fixed)
+    print("\n=== AFTER AUTO-ENHANCEMENT ===")
+    print(f"New brightness: {fixed_report['mean_brightness']} | New contrast: {fixed_report['std_contrast']}")
+    plot_histograms(img_fixed, title_prefix="[After Fix] ")
