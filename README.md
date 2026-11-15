@@ -27,3 +27,21 @@ W folderze `task1/` znajdują się zrzuty ekranu przedstawiające wyniki działa
 *(zmniejszony o 50%, skala szarości, obrót o 90°)*
 
 ![Result Image](task1/result.png)
+
+
+---
+
+# Computer Graphics – Task 2
+
+Skrypt w języku Python analizujący jakość zdalnie pobranego zdjęcia na podstawie statystyk jego histogramu oraz automatycznie poprawiający ekspozycję i kontrast w przypadku wykrycia wad (bonus).
+
+## Jak uruchomić program
+
+```bash
+python task2/task2.py
+ ```
+
+## Wyniki działania programu
+
+![Before Fix](task2/defective_image.png)
+![After Fix](task2/fixed_image.png)
