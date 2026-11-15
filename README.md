@@ -39,9 +39,46 @@ Skrypt w języku Python analizujący jakość zdalnie pobranego zdjęcia na pods
 
 ```bash
 python task2/task2.py
- ```
+```
 
 ## Wyniki działania programu
 
 ![Before Fix](task2/defective_image.png)
 ![After Fix](task2/fixed_image.png)
+
+
+---
+
+# Computer Graphics – Task 3
+
+Skrypt w języku Python automatycznie zliczający powtórzenia ćwiczeń (**squat** oraz **bicep curl**) na nagraniach wideo przy użyciu wstępnego przetwarzania klatek (rozmycie Gaussa + CLAHE) oraz modelu detekcji pozy **YOLOv8-Pose**.
+
+## Jak uruchomić program
+
+1. Zainstaluj wymaganą bibliotekę **Ultralytics** (w aktywnym środowisku `.venv`):
+   ```bash
+   pip install ultralytics
+   ```
+
+2. Wybierz ćwiczenie w pliku `task3/task3.py` (na dole pliku w sekcji `if __name__ == "__main__":` odkomentuj wywołanie dla odpowiedniego ćwiczenia):
+   ```python
+   # Dla przysiadów (squat):
+   run_rep_counter("squat", "squat_sample.mp4", "output_squat.mp4", pose_model)
+
+   # Lub dla uginania ramion (bicep curl):
+   run_rep_counter("bicep_curl", "bicep_curl_sample.mp4", "output_bicep_curl.mp4", pose_model)
+   ```
+
+3. Uruchom skrypt z poziomu głównego katalogu projektu:
+   ```bash
+   python task3/task3.py
+   ```
+   *(Podczas odtwarzania wideo możesz wcisnąć klawisz `q`, aby przerwać działanie programu).*
+
+## Wyniki i nagrania wyjściowe
+
+Po przetworzeniu wideo skrypt generuje pliki wideo z nałożonym szkieletem kluczowych punktów ciała (keypoints), zmierzonym kątem w stawie oraz licznikiem powtórzeń (HUD).
+
+Pliki wynikowe zapisywane są bezpośrednio w katalogu **`task3/`**:
+- **`task3/output_squat.mp4`** – wynik analizy ćwiczenia przysiadów (*squat*).
+- **`task3/output_bicep_curl.mp4`** – wynik analizy ćwiczenia uginania przedramion (*bicep curl*).
