@@ -9,12 +9,14 @@ from ultralytics import YOLO
 # Right side: shoulder=6, elbow=8, wrist=10, hip=12, knee=14, ankle=16
 EXERCISE_CONFIG = {
     "squat": {
-        "joints": (11, 13, 15),   # left hip, knee, ankle
+        "left_joints": (11, 13, 15),
+        "right_joints": (12, 14, 16),
         "down_angle": 95.0,
         "up_angle": 160.0,
     },
     "bicep_curl": {
-        "joints": (5, 7, 9),      # left shoulder, elbow, wrist
+        "left_joints": (5, 7, 9),
+        "right_joints": (6, 8, 10),
         "down_angle": 50.0,
         "up_angle": 155.0,
     },
@@ -43,11 +45,10 @@ def calculate_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
     return float(np.degrees(angle))
 
 
-def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4", output_name: str = "output_squat.mp4"):
+def run_rep_counter(exercise: str, input_name: str, output_name: str, model: YOLO):
     cfg = EXERCISE_CONFIG[exercise]
-    idx_a, idx_b, idx_c = cfg["joints"]
-
-    model = YOLO("yolov8n-pose.pt")
+    left_idx = cfg["left_joints"]
+    right_idx = cfg["right_joints"]
 
     base_dir = Path(__file__).parent
     video_path = base_dir / input_name
@@ -80,6 +81,11 @@ def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4
             kpts = results[0].keypoints.xy[0].cpu().numpy()
             confs = results[0].keypoints.conf[0].cpu().numpy()
 
+            # pick whichever side (left or right) has higher average keypoint confidence
+            left_conf = np.mean([confs[i] for i in left_idx])
+            right_conf = np.mean([confs[i] for i in right_idx])
+            idx_a, idx_b, idx_c = left_idx if left_conf >= right_conf else right_idx
+
             if confs[idx_a] > 0.5 and confs[idx_b] > 0.5 and confs[idx_c] > 0.5:
                 pt_a, pt_b, pt_c = kpts[idx_a], kpts[idx_b], kpts[idx_c]
                 angle = calculate_angle(pt_a, pt_b, pt_c)
@@ -100,7 +106,7 @@ def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4
                     2,
                 )
 
-        cv2.rectangle(annotated, (15, 15), (310, 105), (20, 20, 20), -1)
+        cv2.rectangle(annotated, (15, 15), (360, 105), (20, 20, 20), -1)
         cv2.putText(annotated, f"EXERCISE: {exercise.upper()}", (25, 42), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (200, 200, 200), 2)
         cv2.putText(annotated, f"REPS: {rep_count}  |  STAGE: {stage}", (25, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
 
@@ -118,5 +124,6 @@ def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4
 
 
 if __name__ == "__main__":
-    run_rep_counter(exercise="squat", input_name="squat_sample.mp4", output_name="output_squat.mp4")
-    run_rep_counter(exercise="bicep_curl", input_name="bicep_curl_sample.mp4", output_name="output_bicep_curl.mp4")
+    pose_model = YOLO("yolov8n-pose.pt")
+    run_rep_counter("squat", "squat_sample.mp4", "output_squat.mp4", pose_model)
+    run_rep_counter("bicep_curl", "bicep_curl_sample.mp4", "output_bicep_curl.mp4", pose_model)
