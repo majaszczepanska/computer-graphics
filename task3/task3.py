@@ -119,3 +119,4 @@ def run_rep_counter(exercise: str = "squat", input_name: str = "squat_sample.mp4
 
 if __name__ == "__main__":
     run_rep_counter(exercise="squat", input_name="squat_sample.mp4", output_name="output_squat.mp4")
+    run_rep_counter(exercise="bicep_curl", input_name="bicep_curl_sample.mp4", output_name="output_bicep_curl.mp4")
