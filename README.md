@@ -60,7 +60,7 @@ Skrypt w języku Python automatycznie zliczający powtórzenia ćwiczeń (**squa
    pip install ultralytics
    ```
 
-2. Wybierz ćwiczenie w pliku `task3/task3.py` (na dole pliku w sekcji `if __name__ == "__main__":` odkomentuj wywołanie dla odpowiedniego ćwiczenia):
+2. W pliku task3/task3.py (w sekcji if __name__ == "__main__":) skonfigurowano analizę obu ćwiczeń sekwencyjnie (możesz zakomentować wybrane wywołanie, aby uruchomić tylko jedno z nich):
    ```python
    # Dla przysiadów (squat):
    run_rep_counter("squat", "squat_sample.mp4", "output_squat.mp4", pose_model)
